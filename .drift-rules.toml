@@ -1,0 +1,89 @@
+# GuardRail-Agent Policy Configuration
+# Defines architectural boundaries, slopsquatting guards, and security bypass rules for AI-assisted codebases.
+
+[general]
+name = "Standard AI Drift & Guardrails Policy"
+fail_on_severity = "error"
+exclude_patterns = [
+    ".git/**",
+    ".venv/**",
+    "venv/**",
+    "__pycache__/**",
+    "*.egg-info/**",
+    "dist/**",
+    "build/**",
+]
+
+[slopsquatting]
+enabled = true
+min_package_age_days = 30
+min_monthly_downloads = 500
+check_age = true
+check_registry = true
+allowlist = [
+    "pytest",
+    "pytest-asyncio",
+    "respx",
+    "typer",
+    "rich",
+    "httpx",
+    "pydantic",
+    "tree-sitter",
+    "tree-sitter-python",
+]
+blocklist = [
+    "requestss",
+    "urllib4",
+    "colorama2",
+]
+registry_url = "https://pypi.org/pypi/{package}/json"
+timeout_seconds = 5.0
+
+[architecture]
+enabled = true
+
+[architecture.layers]
+domain = ["**/domain/**", "**/models/**", "**/entities/**"]
+application = ["**/application/**", "**/services/**", "**/use_cases/**"]
+infrastructure = ["**/infrastructure/**", "**/repositories/**", "**/database/**", "**/clients/**"]
+presentation = ["**/presentation/**", "**/controllers/**", "**/api/**", "**/cli.py", "**/reporters/**"]
+
+[[architecture.forbidden_imports]]
+source_layer = "domain"
+disallowed_layers = ["infrastructure", "presentation", "application"]
+reason = "Domain entities must have zero external architectural dependencies."
+
+[[architecture.forbidden_imports]]
+source_layer = "application"
+disallowed_layers = ["presentation"]
+reason = "Application logic cannot depend on user interface or presentation layer."
+
+[[architecture.forbidden_imports]]
+source_layer = "presentation"
+disallowed_layers = ["infrastructure"]
+reason = "Presentation controllers should not directly import raw infrastructure/database drivers."
+
+[bypasses]
+enabled = true
+max_new_suppressions = 0
+forbidden_suppressions = [
+    "# noqa",
+    "# type: ignore",
+    "# nosec",
+    "# pragma: no cover",
+    "// @ts-ignore",
+    "/* eslint-disable",
+    "// eslint-disable-next-line",
+]
+dangerous_calls = [
+    { pattern = 'verify\s*=\s*False', severity = "error", message = "Disabled TLS/SSL certificate verification detected." },
+    { pattern = 'shell\s*=\s*True', severity = "error", message = "subprocess call with shell=True creates command injection risk." },
+    { pattern = '\beval\s*\(', severity = "error", message = "Arbitrary code execution via eval() detected." },
+    { pattern = '\bexec\s*\(', severity = "error", message = "Arbitrary code execution via exec() detected." },
+    { pattern = 'os\.system\s*\(', severity = "warning", message = "Use of os.system() is discouraged; use subprocess.run with an argument list." },
+]
+exempt_paths = [
+    "tests/**",
+    "*_test.py",
+    "test_*.py",
+]
