@@ -1,35 +1,47 @@
 # GuardRail-Agent 🛡️
-> **CLI + CI/CD Drift Engine for AI-Assisted Codebases**  
+> **CLI + CI/CD Drift Engine & Native MCP Server for AI-Assisted Codebases**  
 > *Prevent AI coding agents from introducing hallucinated dependencies (slopsquatting), architectural boundary erosion, and security bypasses.*
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python: >=3.11](https://img.shields.io/badge/Python->=3.11-blue.svg)](https://www.python.org/)
+[![MCP: 2.1+](https://img.shields.io/badge/MCP-Native%20Server-blueviolet.svg)](https://modelcontextprotocol.io/)
 [![SARIF 2.1.0](https://img.shields.io/badge/SARIF-2.1.0-brightgreen.svg)](https://sarifweb.azurewebsites.net/)
 
 ---
 
 ## The Problem: The Hidden Failure Modes of AI Coding Agents
 
-Autonomous and semi-autonomous AI coding agents (Claude Code, Cursor, Aider, GitHub Copilot Workspace) drastically accelerate development. However, they consistently introduce three dangerous failure patterns:
+Autonomous and semi-autonomous AI coding agents (Claude Code, Cursor, Windsurf, Aider, GitHub Copilot) drastically accelerate software delivery. However, they consistently introduce three dangerous failure patterns:
 
 1. **Hallucinated Dependencies & Slopsquatting:**  
-   LLMs frequently invent non-existent package names (e.g., `flask-jwt-auth-v2`, `fastapi-validation-utils`). Malicious actors monitor common LLM hallucinations and register them on PyPI containing remote access trojans or info-stealers (an attack known as **Slopsquatting**). When the AI agent or developer runs `pip install`, arbitrary code executes on the machine.
+   LLMs frequently invent non-existent package names (e.g., `flask-jwt-auth-v2`, `fastapi-validation-utils`). Malicious actors monitor common LLM hallucinations and register them on PyPI or npm containing remote access trojans or info-stealers (an attack known as **Slopsquatting**). When the AI agent or developer runs `pip install`, arbitrary code executes on the machine.
 2. **Architectural Drift & Layer Erosion:**  
    AI agents lack holistic architectural awareness. When asked to "fetch user data on the checkout screen," an AI agent often bypasses domain services and directly imports the raw database driver or ORM inside a presentation controller, ruining Clean Architecture / Hexagonal / DDD boundaries.
 3. **Security Bypasses & Quality Gate Evasion:**  
    When confronted with strict linters, typecheckers, or TLS warnings, AI agents take the path of least resistance: adding `# noqa: all`, `# type: ignore`, `// @ts-ignore`, disabling SSL certificate verification (`verify=False`), or invoking `subprocess(shell=True)`.
 
-**GuardRail-Agent** acts as a zero-trust quality gate in local development and CI/CD pipelines to detect and halt these anti-patterns before code merges.
-
 ---
 
-## Key Features
+## Dual-Mode "Shift-Left" Architecture
 
-- **Diff-Aware Inspection:** Does not fail on existing legacy technical debt. Only analyzes files and lines newly modified in a git commit, staged area, or PR branch.
-- **Asynchronous PyPI Registry Verification:** Validates newly introduced dependencies against PyPI concurrently with `httpx`. Catches non-existent packages (404), suspiciously new packages (< 30 days old), and typosquats (Levenshtein distance <= 2).
-- **Tree-Sitter AST Architectural Boundary Checker:** Leverages `tree-sitter-python` to parse AST imports without executing code, enforcing strict layer rules (e.g., `domain` cannot import `infrastructure`).
-- **AST-Based Linter Suppression Counter:** Uses AST to differentiate genuine code suppressions (`# noqa`, `# type: ignore`) and dangerous calls (`verify=False`, `shell=True`, `eval()`) from string literals or documentation.
-- **Dual Reporting:** Generates human-friendly terminal tables and summaries with `rich`, plus industry-standard **SARIF 2.1.0** reports for direct integration with GitHub Advanced Security and GitLab SAST.
+GuardRail-Agent operates in two complementary modes:
+
+```text
+┌────────────────────────────────────────────────────────────────────────┐
+│                        "Shift-Left" Dual Mode                          │
+│                                                                        │
+│   [Mode 1: Native MCP Server]           [Mode 2: Deterministic Gate]   │
+│   Active inside Cursor / Claude Code     Active in CI/CD & Pre-commit  │
+│                                                                        │
+│   AI Agent self-audits before writing:  Independent CI pipeline check: │
+│   - verify_dependencies(...)            - guardrail check --diff       │
+│   - audit_code_drift(...)               - guardrail check --staged     │
+│   - scan_current_git_diff()             - Upload SARIF to GitHub Sec   │
+└────────────────────────────────────────────────────────────────────────┘
+```
+
+1. **Native MCP Server (Interactive Guard):** Allows AI coding agents in Cursor, Claude Code, and Windsurf to self-audit proposed dependencies and code before writing files or committing changes.
+2. **Deterministic CI/CD Gate (Independent Watchdog):** Runs in pre-commit hooks and GitHub Actions PR checks, generating SARIF 2.1.0 alerts to block pull requests if violations slip through.
 
 ---
 
@@ -39,10 +51,13 @@ Autonomous and semi-autonomous AI coding agents (Claude Code, Cursor, Aider, Git
 guardrail-agent/
 ├── guardrail/
 │   ├── __init__.py
-│   ├── cli.py                     # Typer CLI entry points (check, scan, init, version)
+│   ├── cli.py                     # Typer CLI entry points (check, scan, init, mcp serve)
 │   ├── config.py                  # TOML loader and Pydantic models
 │   ├── git_diff.py                # Diff parser and line/dependency modification tracker
 │   ├── models.py                  # Core finding and scan summary data models
+│   ├── server/
+│   │   ├── __init__.py
+│   │   └── mcp_server.py          # Native Model Context Protocol (MCP) server
 │   ├── analyzers/
 │   │   ├── __init__.py
 │   │   ├── slopsquatting.py       # Asynchronous PyPI registry and typosquat checker
@@ -57,9 +72,11 @@ guardrail-agent/
 │   ├── test_slopsquatting.py
 │   ├── test_architecture.py
 │   ├── test_bypasses.py
-│   └── test_cli.py
+│   ├── test_cli.py
+│   └── test_mcp_server.py
 ├── .drift-rules.toml              # Default policy file
 ├── pyproject.toml                 # Packaging & dependencies
+├── GUARDRAIL_WORKFLOW_REPORT.md   # Living progress log & multi-language guide
 └── README.md
 ```
 
@@ -67,7 +84,6 @@ guardrail-agent/
 
 ## Installation
 
-### From Source / Pip
 ```bash
 git clone https://github.com/guardrail-agent/guardrail-agent.git
 cd guardrail-agent
@@ -75,6 +91,49 @@ python -m pip install -e .
 ```
 
 Requires Python >= 3.11.
+
+---
+
+## Model Context Protocol (MCP) Server Setup
+
+GuardRail-Agent provides a native MCP server with stdio transport.
+
+### Adding to Claude Code / Cursor / Windsurf
+
+Add the following to your MCP configuration file (e.g. `claude_desktop_config.json` or `.cursor/mcp.json`):
+
+```json
+{
+  "mcpServers": {
+    "guardrail": {
+      "command": "python",
+      "args": ["-m", "guardrail.server.mcp_server"]
+    }
+  }
+}
+```
+
+Or if installed in a dedicated virtual environment:
+```json
+{
+  "mcpServers": {
+    "guardrail": {
+      "command": "C:/Python/Projects/guardrail-agent/.venv/Scripts/guardrail-mcp.exe"
+    }
+  }
+}
+```
+
+### Exposed MCP Tools
+
+The AI assistant automatically accesses three dedicated tools:
+
+1. **`verify_dependencies(manifest_content: str, manifest_type: str = "requirements.txt")`**  
+   Audits dependencies before installing. Returns hallucinated (404) packages, freshly registered packages (< 30 days old), and typosquat warnings.
+2. **`audit_code_drift(file_path: str, source_code: str)`**  
+   Evaluates proposed Python code before saving to disk. Detects layer boundary violations according to `.drift-rules.toml`, banned calls (`verify=False`, `shell=True`, `eval`), and linter suppressions (`# noqa`, `# type: ignore`).
+3. **`scan_current_git_diff()`**  
+   Performs a full audit across all uncommitted working tree modifications in the local git repository.
 
 ---
 
@@ -106,22 +165,21 @@ guardrail scan .
 guardrail scan src/ --fail-level warning
 ```
 
-### 4. JSON Output
-Emit machine-readable JSON for integration into custom internal tooling:
+### 4. Run MCP Server from CLI
 ```bash
-guardrail scan . --json
+guardrail mcp serve
+# or directly:
+guardrail-mcp
 ```
 
 ---
 
 ## Configuration (`.drift-rules.toml`)
 
-GuardRail-Agent is configured declaratively via `.drift-rules.toml` in your repository root:
-
 ```toml
 [general]
 name = "Standard AI Drift & Guardrails Policy"
-fail_on_severity = "error" # "error", "warning", or "info"
+fail_on_severity = "error"
 exclude_patterns = [
     ".git/**",
     ".venv/**",
@@ -183,13 +241,13 @@ exempt_paths = [
 
 ---
 
-## Real-Life Workflows & CI/CD Integration
+## CI/CD Workflow Integration
 
-### 1. GitHub Actions CI/CD Gate
-Add `.github/workflows/guardrail.yml` to automatically scan every Pull Request and publish security alerts directly onto GitHub's Code Scanning tab:
+### GitHub Actions PR Gate
+Create `.github/workflows/guardrail.yml`:
 
 ```yaml
-name: GuardRail-Agent AI Gate
+name: GuardRail-Agent CI Gate
 
 on:
   pull_request:
@@ -203,7 +261,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Full history needed for base-ref diff
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -224,46 +282,23 @@ jobs:
           sarif_file: guardrail.sarif
 ```
 
-### 2. Pre-Commit Hook Integration
-Prevent AI coding assistants from committing bad code locally by adding this to `.pre-commit-config.yaml`:
-
-```yaml
-repos:
-  - repo: local
-    hooks:
-      - id: guardrail-agent
-        name: GuardRail AI Codebase Gate
-        entry: guardrail check --staged
-        language: python
-        additional_dependencies: ["guardrail-agent"]
-        always_run: true
-        pass_filenames: false
-```
-
-### 3. Agentic Pair-Programming Guard
-When using Cursor, Claude Code, or Aider:
-```bash
-# After the agent announces "I'm done with the task":
-guardrail check --diff
-```
-If the agent hallucinated a library or took an architectural shortcut, GuardRail flags the exact line and rule violation so you can instruct the agent to fix it before committing.
-
 ---
 
 ## Running Tests
 
-Run the full automated test suite with `pytest`:
+Run the complete test suite with `pytest`:
 
 ```bash
 pytest -v
 ```
 
-Test coverage includes:
-- Git unified diff parsing & line-level addition tracking
+All 32 tests verify:
+- Unified git diff parsing and line-level addition tracking
 - Async PyPI 404 hallucination & package age threshold mocking with `respx`
 - Tree-sitter AST layer boundary validation
-- Comment suppression & dangerous call detection
+- Comment suppression & dangerous call AST node checking
 - Typer CLI commands, error handling, JSON output, and SARIF 2.1.0 compliance
+- Native MCP Server tools (`verify_dependencies`, `audit_code_drift`, `scan_current_git_diff`)
 
 ---
 

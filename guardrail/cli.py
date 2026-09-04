@@ -337,6 +337,17 @@ def init(
     console.print(f"[bold green]Created default policy file:[/bold green] {target}")
 
 
+mcp_app = typer.Typer(help="Manage and run the Model Context Protocol (MCP) server.")
+app.add_typer(mcp_app, name="mcp")
+
+
+@mcp_app.command("serve")
+def serve_mcp() -> None:
+    """Start the GuardRail-Agent MCP server over stdio for Claude Code, Cursor, and Windsurf."""
+    from guardrail.server.mcp_server import main
+    main()
+
+
 @app.command()
 def version() -> None:
     """Print GuardRail-Agent version."""
