@@ -98,9 +98,11 @@ Requires Python >= 3.11.
 
 GuardRail-Agent provides a native MCP server with stdio transport.
 
-### Adding to Claude Code / Cursor / Windsurf
+### Adding to Antigravity (Antigravity IDE, CLI, 2.0)
 
-Add the following to your MCP configuration file (e.g. `claude_desktop_config.json` or `.cursor/mcp.json`):
+Google Antigravity natively discovers and mounts MCP servers defined in standard stdio configuration.
+
+Add GuardRail to either your global Antigravity config (`~/.gemini/config/mcp_config.json`) or your project's workspace folder (`.agents/mcp_config.json`):
 
 ```json
 {
@@ -113,16 +115,48 @@ Add the following to your MCP configuration file (e.g. `claude_desktop_config.js
 }
 ```
 
-Or if installed in a dedicated virtual environment:
+#### Antigravity Autonomous Guard Rule (`AGENTS.md` / `GEMINI.md`)
+You can also direct Antigravity agents to automatically self-audit by adding this rule to your repository's `AGENTS.md`:
+
+```markdown
+<!-- AGENTS.md / GEMINI.md -->
+## AI Quality & Security Drift Guard
+- Before saving modified files, run the `guardrail:audit_code_drift` tool to verify architectural layers and clean linter suppressions.
+- When adding or proposing new packages, run `guardrail:verify_dependencies` to ensure packages are not hallucinated (slopsquatted).
+- Run `guardrail:scan_current_git_diff` before signaling task completion.
+```
+
+---
+
+### Adding to Claude Code / Cursor / Windsurf / Codex
+
+Add the following to your IDE's MCP configuration file (e.g. `claude_desktop_config.json` or `.cursor/mcp.json`):
+
 ```json
 {
   "mcpServers": {
     "guardrail": {
-      "command": "C:/Python/Projects/guardrail-agent/.venv/Scripts/guardrail-mcp.exe"
+      "command": "python",
+      "args": ["-m", "guardrail.server.mcp_server"]
     }
   }
 }
 ```
+
+Or when installed in a dedicated virtual environment:
+```json
+{
+  "mcpServers": {
+    "guardrail": {
+      "command": "guardrail-mcp"
+    }
+  }
+}
+```
+
+### Support for OpenAI Codex & GitHub Copilot
+- **Codex / Copilot in CI/CD:** When using OpenAI Codex, Copilot Workspace, or automated PR bots, integrate the deterministic GitHub Actions workflow (`guardrail check --base-ref origin/main --sarif guardrail.sarif`). The action blocks PRs if Codex introduces hallucinated libraries or skips architecture boundaries.
+- **Pre-commit Gating:** Install the local git hook (`guardrail check --staged`) so whenever Copilot or Codex makes changes locally, git prevents commits containing violations.
 
 ### Exposed MCP Tools
 
@@ -304,7 +338,7 @@ All 32 tests verify:
 
 ## Author & Security Research
 
-Engineered by **Atam Keze**  
+Engineered by **Rock Atamkeze**  
 *Fullstack Software Engineer | AI Engineer | Ethical Hacking & AI Security Specialist*
 
 - **GitHub:** [@atamkeze](https://github.com/atamkeze)

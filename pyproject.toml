@@ -9,7 +9,7 @@ description = "CLI + CI/CD Drift Engine preventing AI coding agents from introdu
 readme = "README.md"
 requires-python = ">=3.11"
 authors = [
-    { name = "Atam Keze" }
+    { name = "Rock Atamkeze" }
 ]
 license = { text = "MIT" }
 keywords = ["ai-safety", "security", "ci-cd", "slopsquatting", "architecture-linter", "tree-sitter", "mcp", "fastmcp"]

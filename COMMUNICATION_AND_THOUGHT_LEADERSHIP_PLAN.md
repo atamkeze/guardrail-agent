@@ -59,7 +59,7 @@ A dual-mode tool that operates as:
 Built with Python 3.13, Tree-Sitter AST parsing, and async PyPI registry verification.
 
 Check out the repository, star it on GitHub, and let me know your thoughts:
-🔗 GitHub: https://github.com/<your-username>/guardrail-agent
+🔗 GitHub: https://github.com/atamkeze/guardrail-agent
 
 #AI #CyberSecurity #ApplicationSecurity #SoftwareEngineering #Python #MCP #DevSecOps #EthicalHacking
 ```
@@ -78,7 +78,7 @@ Check out the repository, star it on GitHub, and let me know your thoughts:
 ```markdown
 # Slopsquatting: How AI Coding Agents Are Creating the Next Supply Chain Crisis
 
-### By [Your Name], Fullstack AI Engineer & Security Researcher
+### By Rock Atamkeze, Fullstack AI Engineer & Security Researcher
 
 The software industry is experiencing an unprecedented inflection point. Over 40% of newly authored code in modern startups and enterprises is drafted or suggested by AI coding agents. 
 
@@ -148,7 +148,7 @@ To solve this, GuardRail-Agent implements the **Model Context Protocol (MCP)**:
 
 AI-assisted coding is here to stay, but unconstrained AI code generation represents a serious security and architectural risk. As engineers and security researchers, our job is not to slow down innovation, but to construct the guardrails that make fast innovation safe.
 
-- **GitHub Repository:** [https://github.com/<your-username>/guardrail-agent](https://github.com/<your-username>/guardrail-agent)
+- **GitHub Repository:** [https://github.com/atamkeze/guardrail-agent](https://github.com/atamkeze/guardrail-agent)
 - **License:** MIT (Free & Open Source)
 ```
 
@@ -196,7 +196,7 @@ If the AI hallucinates a package, it gets an immediate 404 alert and removes it.
 
 **Tweet 8 (CTA):**  
 It's 100% open source under MIT.  
-⭐ Star the repo on GitHub: https://github.com/<your-username>/guardrail-agent  
+⭐ Star the repo on GitHub: https://github.com/atamkeze/guardrail-agent  
 Read the architecture docs & let me know what language adapters (PHP, JS/TS, Go) you want next! (8/8)
 
 ---
@@ -217,7 +217,7 @@ I'm a fullstack engineer and security researcher. Over the last few months, I ob
 3. Quality Evasion: Agents lazily adding '# type: ignore', '# noqa', or 'verify=False' to bypass linters.
 
 I built GuardRail-Agent to solve this:
-https://github.com/<your-username>/guardrail-agent
+https://github.com/atamkeze/guardrail-agent
 
 Key architectural decisions:
 - Dual-Mode "Shift-Left": Operates as a native Model Context Protocol (MCP) server so Cursor and Claude Code can self-audit before writing files, AND as a deterministic CI/CD gate.
@@ -255,4 +255,4 @@ I'd love feedback from the HN community on the architecture, rule schemas, and e
 > Fullstack Software Engineer, AI Engineer, and Ethical Hacking / AI Security Specialist. I specialize in scalable software architecture, LLM agent toolchains (MCP), and application security. Creator of GuardRail-Agent—an open-source drift engine preventing AI hallucination squatting and architectural erosion.
 
 ### Long Bio (Conference proposals / Guest articles):
-> [Your Name] is a Fullstack Software Engineer, AI Engineer, and Ethical Hacker & AI Security Researcher. With deep experience spanning full-stack web platforms, distributed systems, and offensive security, [Your Name] focuses on the intersection of generative AI and software supply-chain security. They are the author of GuardRail-Agent, an open-source CLI and Model Context Protocol (MCP) gatekeeper preventing AI coding agents from introducing hallucinated dependencies, architectural erosion, and subtle security bypasses.
+> Rock Atamkeze is a Fullstack Software Engineer, AI Engineer, and Ethical Hacker & AI Security Researcher. With deep experience spanning full-stack web platforms, distributed systems, and offensive security, Rock Atamkeze focuses on the intersection of generative AI and software supply-chain security. They are the author of GuardRail-Agent, an open-source CLI and Model Context Protocol (MCP) gatekeeper preventing AI coding agents from introducing hallucinated dependencies, architectural erosion, and subtle security bypasses.
