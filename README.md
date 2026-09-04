@@ -85,7 +85,7 @@ guardrail-agent/
 ## Installation
 
 ```bash
-git clone https://github.com/guardrail-agent/guardrail-agent.git
+git clone https://github.com/atamkeze/guardrail-agent.git
 cd guardrail-agent
 python -m pip install -e .
 ```
@@ -302,6 +302,16 @@ All 32 tests verify:
 
 ---
 
+## Author & Security Research
+
+Engineered by **Atam Keze**  
+*Fullstack Software Engineer | AI Engineer | Ethical Hacking & AI Security Specialist*
+
+- **GitHub:** [@atamkeze](https://github.com/atamkeze)
+- **Repository:** [https://github.com/atamkeze/guardrail-agent](https://github.com/atamkeze/guardrail-agent)
+
+---
+
 ## License
 
-MIT License. Designed and engineered for secure, drift-free AI software development.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

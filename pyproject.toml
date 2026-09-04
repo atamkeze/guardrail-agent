@@ -9,10 +9,15 @@ description = "CLI + CI/CD Drift Engine preventing AI coding agents from introdu
 readme = "README.md"
 requires-python = ">=3.11"
 authors = [
-    { name = "Principal AI Security Engineer", email = "security@guardrail-agent.dev" }
+    { name = "Atam Keze" }
 ]
 license = { text = "MIT" }
 keywords = ["ai-safety", "security", "ci-cd", "slopsquatting", "architecture-linter", "tree-sitter", "mcp", "fastmcp"]
+
+[project.urls]
+Homepage = "https://github.com/atamkeze/guardrail-agent"
+Repository = "https://github.com/atamkeze/guardrail-agent"
+Issues = "https://github.com/atamkeze/guardrail-agent/issues"
 classifiers = [
     "Development Status :: 4 - Beta",
     "Environment :: Console",
