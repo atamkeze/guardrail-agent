@@ -62,6 +62,11 @@ def collect_project_files(
     root: Path, exclude_patterns: List[str]
 ) -> List[Path]:
     """Recursively collect all relevant source code files excluding ignored directories."""
+    if root.is_file():
+        rel_str = root.name
+        if not is_path_excluded(rel_str, exclude_patterns):
+            return [root]
+        return []
     files: List[Path] = []
     for p in root.rglob("*"):
         if not p.is_file():
@@ -154,7 +159,11 @@ async def execute_scan(
         all_files = collect_project_files(root, config.general.exclude_patterns)
         summary.total_files_scanned = len(all_files)
         for full_path in all_files:
-            rel_path = str(full_path.relative_to(root)).replace("\\", "/")
+            rel_path = (
+                full_path.name
+                if root.is_file()
+                else str(full_path.relative_to(root)).replace("\\", "/")
+            )
             try:
                 code_bytes = full_path.read_bytes()
                 code_text = code_bytes.decode("utf-8", errors="replace")
