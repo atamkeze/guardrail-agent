@@ -12,11 +12,12 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 try:
-    from mcp.server.mcpserver import MCPServer
-    mcp = MCPServer("guardrail")
+    from mcp.server.mcpserver import MCPServer as _ServerClass
 except ImportError:
-    from mcp.server.fastmcp import FastMCP  # type: ignore[no-redef]
-    mcp = FastMCP("guardrail")
+    import importlib
+    _ServerClass = getattr(importlib.import_module("mcp.server.fastmcp"), "FastMCP")
+
+mcp = _ServerClass("guardrail")
 
 from guardrail.analyzers.architecture import ArchitectureAnalyzer
 from guardrail.analyzers.bypasses import BypassesAnalyzer

@@ -45,6 +45,22 @@ app = typer.Typer(
 console = Console(soft_wrap=True)
 
 
+def version_callback(value: bool) -> None:
+    if value:
+        console.print(f"[bold cyan]GuardRail-Agent[/bold cyan] version [bold green]{__version__}[/bold green]")
+        raise typer.Exit()
+
+
+@app.callback()
+def main_callback(
+    version: Optional[bool] = typer.Option(
+        None, "--version", "-v", help="Show the application version and exit.", callback=version_callback, is_eager=True
+    ),
+) -> None:
+    """GuardRail-Agent: AI Codebase Drift & Security Inspection Gate."""
+    pass
+
+
 def is_path_excluded(path_str: str, exclude_patterns: List[str]) -> bool:
     """Check if a path matches any exclusion patterns."""
     norm = path_str.replace("\\", "/").strip("/")
@@ -337,8 +353,18 @@ def init(
     console.print(f"[bold green]Created default policy file:[/bold green] {target}")
 
 
-mcp_app = typer.Typer(help="Manage and run the Model Context Protocol (MCP) server.")
+mcp_app = typer.Typer(
+    help="Manage and run the Model Context Protocol (MCP) server.",
+    invoke_without_command=True,
+)
 app.add_typer(mcp_app, name="mcp")
+
+
+@mcp_app.callback(invoke_without_command=True)
+def mcp_callback(ctx: typer.Context) -> None:
+    if ctx.invoked_subcommand is None:
+        from guardrail.server.mcp_server import main
+        main()
 
 
 @mcp_app.command("serve")
