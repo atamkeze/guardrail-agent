@@ -1,10 +1,11 @@
 # GuardRail-Agent 🛡️
-> **CLI + CI/CD Drift Engine & Native MCP Server for AI-Assisted Codebases**  
+
+> **CLI + CI/CD Drift Engine & Native MCP Server for AI-Assisted Codebases**
 > *Prevent AI coding agents from introducing hallucinated dependencies (slopsquatting), architectural boundary erosion, and security bypasses.*
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python: >=3.11](https://img.shields.io/badge/Python->=3.11-blue.svg)](https://www.python.org/)
-[![MCP: 2.1+](https://img.shields.io/badge/MCP-Native%20Server-blueviolet.svg)](https://modelcontextprotocol.io/)
+[![Python: <span class=](<](https://www.python.org/)[https://img.shields.io/badge/Python-](https://img.shields.io/badge/Python-)=3.11-blue.svg>>)&gt;>=3.11" />
+[![MCP: 2.1+](<https://img.shields.io/badge/MCP-Native%20Server-blueviolet.svg>)](https://modelcontextprotocol.io/)
 [![SARIF 2.1.0](https://img.shields.io/badge/SARIF-2.1.0-brightgreen.svg)](https://sarifweb.azurewebsites.net/)
 
 ---
@@ -13,11 +14,9 @@
 
 Autonomous and semi-autonomous AI coding agents (Claude Code, Cursor, Windsurf, Aider, GitHub Copilot) drastically accelerate software delivery. However, they consistently introduce three dangerous failure patterns:
 
-1. **Hallucinated Dependencies & Slopsquatting:**  
-   LLMs frequently invent non-existent package names (e.g., `flask-jwt-auth-v2`, `fastapi-validation-utils`). Malicious actors monitor common LLM hallucinations and register them on PyPI or npm containing remote access trojans or info-stealers (an attack known as **Slopsquatting**). When the AI agent or developer runs `pip install`, arbitrary code executes on the machine.
-2. **Architectural Drift & Layer Erosion:**  
-   AI agents lack holistic architectural awareness. When asked to "fetch user data on the checkout screen," an AI agent often bypasses domain services and directly imports the raw database driver or ORM inside a presentation controller, ruining Clean Architecture / Hexagonal / DDD boundaries.
-3. **Security Bypasses & Quality Gate Evasion:**  
+1. **Hallucinated Dependencies & Slopsquatting:**LLMs frequently invent non-existent package names (e.g., `flask-jwt-auth-v2`, `fastapi-validation-utils`). Malicious actors monitor common LLM hallucinations and register them on PyPI or npm containing remote access trojans or info-stealers (an attack known as **Slopsquatting**). When the AI agent or developer runs `pip install`, arbitrary code executes on the machine.
+2. **Architectural Drift & Layer Erosion:**AI agents lack holistic architectural awareness. When asked to "fetch user data on the checkout screen," an AI agent often bypasses domain services and directly imports the raw database driver or ORM inside a presentation controller, ruining Clean Architecture / Hexagonal / DDD boundaries.
+3. **Security Bypasses & Quality Gate Evasion:**
    When confronted with strict linters, typecheckers, or TLS warnings, AI agents take the path of least resistance: adding `# noqa: all`, `# type: ignore`, `// @ts-ignore`, disabling SSL certificate verification (`verify=False`), or invoking `subprocess(shell=True)`.
 
 ---
@@ -116,6 +115,7 @@ Add GuardRail to either your global Antigravity config (`~/.gemini/config/mcp_co
 ```
 
 #### Antigravity Autonomous Guard Rule (`AGENTS.md` / `GEMINI.md`)
+
 You can also direct Antigravity agents to automatically self-audit by adding this rule to your repository's `AGENTS.md`:
 
 ```markdown
@@ -144,6 +144,7 @@ Add the following to your IDE's MCP configuration file (e.g. `claude_desktop_con
 ```
 
 Or when installed in a dedicated virtual environment:
+
 ```json
 {
   "mcpServers": {
@@ -155,6 +156,7 @@ Or when installed in a dedicated virtual environment:
 ```
 
 ### Support for OpenAI Codex & GitHub Copilot
+
 - **Codex / Copilot in CI/CD:** When using OpenAI Codex, Copilot Workspace, or automated PR bots, integrate the deterministic GitHub Actions workflow (`guardrail check --base-ref origin/main --sarif guardrail.sarif`). The action blocks PRs if Codex introduces hallucinated libraries or skips architecture boundaries.
 - **Pre-commit Gating:** Install the local git hook (`guardrail check --staged`) so whenever Copilot or Codex makes changes locally, git prevents commits containing violations.
 
@@ -162,11 +164,9 @@ Or when installed in a dedicated virtual environment:
 
 The AI assistant automatically accesses three dedicated tools:
 
-1. **`verify_dependencies(manifest_content: str, manifest_type: str = "requirements.txt")`**  
-   Audits dependencies before installing. Returns hallucinated (404) packages, freshly registered packages (< 30 days old), and typosquat warnings.
-2. **`audit_code_drift(file_path: str, source_code: str)`**  
-   Evaluates proposed Python code before saving to disk. Detects layer boundary violations according to `.drift-rules.toml`, banned calls (`verify=False`, `shell=True`, `eval`), and linter suppressions (`# noqa`, `# type: ignore`).
-3. **`scan_current_git_diff()`**  
+1. **`verify_dependencies(manifest_content: str, manifest_type: str = "requirements.txt")`**Audits dependencies before installing. Returns hallucinated (404) packages, freshly registered packages (< 30 days old), and typosquat warnings.
+2. **`audit_code_drift(file_path: str, source_code: str)`**Evaluates proposed Python code before saving to disk. Detects layer boundary violations according to `.drift-rules.toml`, banned calls (`verify=False`, `shell=True`, `eval`), and linter suppressions (`# noqa`, `# type: ignore`).
+3. **`scan_current_git_diff()`**
    Performs a full audit across all uncommitted working tree modifications in the local git repository.
 
 ---
@@ -174,13 +174,17 @@ The AI assistant automatically accesses three dedicated tools:
 ## CLI Usage
 
 ### 1. Initialize Policy Configuration
+
 Generate a `.drift-rules.toml` policy file in your repository:
+
 ```bash
 guardrail init
 ```
 
 ### 2. Check Git Pull Requests or Working Tree (`check`)
+
 Inspect only newly added or modified lines in git:
+
 ```bash
 # Check unstaged + staged changes in working tree
 guardrail check --diff
@@ -193,13 +197,16 @@ guardrail check --base-ref origin/main --sarif results.sarif
 ```
 
 ### 3. Full Repository Scan (`scan`)
+
 Audit the entire codebase:
+
 ```bash
 guardrail scan .
 guardrail scan src/ --fail-level warning
 ```
 
 ### 4. Run MCP Server from CLI
+
 ```bash
 guardrail mcp serve
 # or directly:
@@ -278,6 +285,7 @@ exempt_paths = [
 ## CI/CD Workflow Integration
 
 ### GitHub Actions PR Gate
+
 Create `.github/workflows/guardrail.yml`:
 
 ```yaml
@@ -327,6 +335,7 @@ pytest -v
 ```
 
 All 32 tests verify:
+
 - Unified git diff parsing and line-level addition tracking
 - Async PyPI 404 hallucination & package age threshold mocking with `respx`
 - Tree-sitter AST layer boundary validation
@@ -338,8 +347,7 @@ All 32 tests verify:
 
 ## Author & Security Research
 
-Engineered by **Rock Atamkeze**  
-*Fullstack Software Engineer | AI Engineer | Ethical Hacking & AI Security Specialist*
+Engineered by **Rock Atamkeze***Fullstack Software Engineer | AI Engineer | Ethical Hacking & AI Security Specialist*
 
 - **GitHub:** [@atamkeze](https://github.com/atamkeze)
 - **Repository:** [https://github.com/atamkeze/guardrail-agent](https://github.com/atamkeze/guardrail-agent)

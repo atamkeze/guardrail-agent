@@ -1,0 +1,14 @@
+# Legitimate dependency
+requests>=2.28.0
+
+# AI hallucinated packages (don't exist on PyPI - slopsquatting risk)
+fastapi-auth-token-superhelper==1.0.0
+flask-jwt-auth-v2>=3.0.0
+django-rest-ultravalidator==2.1.0
+
+# Typosquatting attacks (close to popular packages)
+requestss>=2.28.0
+urllib4>=1.26.0
+
+# Blocklisted by organizational policy
+colorama2>=0.4.0

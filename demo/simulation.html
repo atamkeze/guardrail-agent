@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GuardRail-Agent Live Simulation</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #0d1117;
+            font-family: 'Inter', sans-serif;
+            color: #c9d1d9;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 24px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #58a6ff, #bc8cff, #f778ba);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 6px;
+        }
+        .header .subtitle {
+            font-size: 14px;
+            color: #8b949e;
+        }
+        .scenario-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #238636, #2ea043);
+            color: #fff;
+            font-size: 13px;
+            font-weight: 600;
+            padding: 4px 16px;
+            border-radius: 20px;
+            margin-top: 10px;
+            letter-spacing: 0.5px;
+        }
+        .scenario-badge.fail { background: linear-gradient(135deg, #da3633, #f85149); }
+        .scenario-badge.warn { background: linear-gradient(135deg, #d29922, #e3b341); color: #0d1117; }
+        .terminal {
+            width: 100%;
+            max-width: 1100px;
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 16px 48px rgba(0,0,0,0.4);
+            margin-bottom: 24px;
+        }
+        .terminal-bar {
+            background: #21262d;
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid #30363d;
+        }
+        .terminal-dot {
+            width: 12px; height: 12px; border-radius: 50%;
+        }
+        .terminal-dot.r { background: #f85149; }
+        .terminal-dot.y { background: #e3b341; }
+        .terminal-dot.g { background: #3fb950; }
+        .terminal-title {
+            flex: 1;
+            text-align: center;
+            font-size: 12px;
+            color: #8b949e;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .terminal-body {
+            padding: 20px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            overflow-x: auto;
+            min-height: 200px;
+        }
+        .prompt { color: #3fb950; }
+        .cmd { color: #58a6ff; font-weight: 600; }
+        .output-line { color: #c9d1d9; }
+        .dim { color: #484f58; }
+        .cyan { color: #58a6ff; }
+        .green { color: #3fb950; }
+        .red { color: #f85149; }
+        .yellow { color: #e3b341; }
+        .magenta { color: #bc8cff; }
+        .bold { font-weight: 700; }
+        .white { color: #e6edf3; }
+
+        /* Rich-style table */
+        .rich-table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 12px 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+        }
+        .rich-table th {
+            background: #21262d;
+            color: #8b949e;
+            padding: 8px 12px;
+            text-align: left;
+            border-bottom: 2px solid #30363d;
+            font-weight: 600;
+        }
+        .rich-table td {
+            padding: 8px 12px;
+            border-bottom: 1px solid #21262d;
+            vertical-align: top;
+        }
+        .rich-table tr:hover { background: rgba(88,166,255,0.05); }
+
+        /* Rich-style panels */
+        .panel {
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            margin: 12px 0;
+            overflow: hidden;
+        }
+        .panel-title {
+            padding: 6px 16px;
+            font-size: 12px;
+            font-weight: 700;
+            text-align: center;
+            border-bottom: 1px solid #30363d;
+        }
+        .panel-title.cyan-bg { background: rgba(88,166,255,0.1); color: #58a6ff; border-color: #1f6feb; }
+        .panel-title.green-bg { background: rgba(63,185,80,0.1); color: #3fb950; border-color: #238636; }
+        .panel-title.red-bg { background: rgba(248,81,73,0.1); color: #f85149; border-color: #da3633; }
+        .panel-body { padding: 12px 16px; }
+
+        .panel.green-border { border-color: #238636; }
+        .panel.red-border { border-color: #da3633; }
+        .panel.cyan-border { border-color: #1f6feb; }
+
+        .sev-error { color: #f85149; font-weight: 700; }
+        .sev-warn { color: #e3b341; font-weight: 700; }
+        .sev-info { color: #58a6ff; font-weight: 700; }
+
+        .snippet { color: #484f58; font-style: italic; }
+
+        .hidden { display: none; }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        .controls button {
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            padding: 8px 20px;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            background: #21262d;
+            color: #c9d1d9;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .controls button:hover {
+            background: #30363d;
+            border-color: #58a6ff;
+            color: #58a6ff;
+        }
+        .controls button.active {
+            background: linear-gradient(135deg, #1f6feb, #388bfd);
+            color: #fff;
+            border-color: #58a6ff;
+        }
+
+        /* Typing animation */
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+        .cursor {
+            display: inline-block;
+            width: 8px;
+            height: 16px;
+            background: #3fb950;
+            animation: blink 1s infinite;
+            vertical-align: middle;
+            margin-left: 2px;
+        }
+
+        /* Animated entry */
+        @keyframes fadeSlideIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-in {
+            animation: fadeSlideIn 0.4s ease forwards;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🛡️ GuardRail-Agent Live Simulation</h1>
+        <div class="subtitle">CLI + CI/CD Drift Engine & Native MCP Server for AI-Assisted Codebases</div>
+    </div>
+
+    <div class="controls">
+        <button class="active" onclick="showScenario('slopsquatting')">1. Slopsquatting</button>
+        <button onclick="showScenario('architecture')">2. Architecture Drift</button>
+        <button onclick="showScenario('bypasses')">3. Security Bypasses</button>
+        <button onclick="showScenario('fullscan')">4. Full Scan (JSON)</button>
+        <button onclick="showScenario('sarif')">5. SARIF Export</button>
+        <button onclick="showScenario('clean')">6. Clean Pass ✓</button>
+    </div>
+
+    <!-- ═══════════════ SCENARIO 1: SLOPSQUATTING ═══════════════ -->
+    <div id="scenario-slopsquatting" class="terminal animate-in">
+        <div class="terminal-bar">
+            <div class="terminal-dot r"></div>
+            <div class="terminal-dot y"></div>
+            <div class="terminal-dot g"></div>
+            <div class="terminal-title">PowerShell — guardrail scan demo\requirements_poisoned.txt</div>
+        </div>
+        <div class="terminal-body">
+            <div><span class="prompt">PS C:\guardrail-agent&gt;</span> <span class="cmd">guardrail scan demo\requirements_poisoned.txt</span></div>
+            <br>
+            <div class="panel cyan-border">
+                <div class="panel-title cyan-bg">🛡️ [GuardRail-Agent] | AI Codebase Drift & Security Inspection</div>
+            </div>
+            <div style="margin-top:8px; color:#8b949e; font-weight:600; font-size:12px;">Detected AI Codebase Drift & Violations</div>
+            <table class="rich-table">
+                <tr>
+                    <th style="width:90px;">Severity</th>
+                    <th style="width:140px;">Rule ID</th>
+                    <th style="width:180px;">Location</th>
+                    <th>Description & Remediation</th>
+                </tr>
+                <tr>
+                    <td><span class="sev-error">ERROR</span></td>
+                    <td class="magenta">GUARD-SLOP-001</td>
+                    <td class="cyan">.:4</td>
+                    <td class="white">Hallucinated dependency: <span class="bold">'fastapi-auth-token-superhelper'</span> does not exist on PyPI!<br><span class="snippet">Code: fastapi-auth-token-superhelper==1.0.0</span></td>
+                </tr>
+                <tr>
+                    <td><span class="sev-error">ERROR</span></td>
+                    <td class="magenta">GUARD-SLOP-001</td>
+                    <td class="cyan">.:5</td>
+                    <td class="white">Hallucinated dependency: <span class="bold">'flask-jwt-auth-v2'</span> does not exist on PyPI! AI coding agents frequently hallucinate package names.<br><span class="snippet">Code: flask-jwt-auth-v2&gt;=3.0.0</span></td>
+                </tr>
+                <tr>
+                    <td><span class="sev-error">ERROR</span></td>
+                    <td class="magenta">GUARD-SLOP-001</td>
+                    <td class="cyan">.:7</td>
+                    <td class="white">Hallucinated dependency: <span class="bold">'django-rest-ultravalidator'</span> does not exist on PyPI! An attacker could register this name (Slopsquatting).<br><span class="snippet">Code: django-rest-ultravalidator==2.1.0</span></td>
+                </tr>
+                <tr>
+                    <td><span class="sev-error">ERROR</span></td>
+                    <td class="magenta">GUARD-SLOP-000</td>
+                    <td class="cyan">.:10</td>
+                    <td class="white">Dependency <span class="bold">'requestss'</span> is explicitly blocklisted by organizational policy.<br><span class="snippet">Code: requestss&gt;=2.28.0</span></td>
+                </tr>
+                <tr>
+                    <td><span class="sev-error">ERROR</span></td>
+                    <td class="magenta">GUARD-SLOP-000</td>
+                    <td class="cyan">.:11</td>
+                    <td class="white">Dependency <span class="bold">'urllib4'</span> is explicitly blocklisted by organizational policy.<br><span class="snippet">Code: urllib4&gt;=1.26.0</span></td>
+                </tr>
+                <tr>
+                    <td><span class="sev-error">ERROR</span></td>
+                    <td class="magenta">GUARD-SLOP-000</td>
+                    <td class="cyan">.:14</td>
+                    <td class="white">Dependency <span class="bold">'colorama2'</span> is explicitly blocklisted by organizational policy.<br><span class="snippet">Code: colorama2&gt;=0.4.0</span></td>
+                </tr>
+            </table>
+            <div class="panel red-border">
+                <div class="panel-title red-bg">🚫 GATE FAILED</div>
+                <div class="panel-body">
+                    <div><span class="bold">Scanned Files:</span> 1</div>
+                    <div><span class="bold">Total Violations:</span> 6 (<span class="red">6 errors</span>, <span class="yellow">0 warnings</span>, <span class="cyan">0 info</span>)</div>
+                    <br>
+                    <div class="red bold">[FAIL] Quality gate failed: Found violations matching or exceeding threshold 'ERROR'.</div>
+                    <div class="red">CI/CD must block this pull request to protect codebase integrity against AI drift.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════ SCENARIO 2: ARCHITECTURE DRIFT ═══════════════ -->
+    <div id="scenario-architecture" class="terminal hidden">
+        <div class="terminal-bar">
+            <div class="terminal-dot r"></div>
+            <div class="terminal-dot y"></div>
+            <div class="terminal-dot g"></div>
+            <div class="terminal-title">PowerShell — guardrail scan demo\domain\ demo\presentation\</div>
+        </div>
+        <div class="terminal-body">
+            <div><span class="prompt">PS C:\guardrail-agent&gt;</span> <span class="cmd">guardrail scan demo\</span></div>
+            <br>
+            <div class="panel cyan-border">
+                <div class="panel-title cyan-bg">🛡️ [GuardRail-Agent] | AI Codebase Drift & Security Inspection</div>
+            </div>
+            <div style="margin-top:8px; color:#8b949e; font-weight:600; font-size:12px;">Detected AI Codebase Drift & Violations — Architecture Layer Boundary</div>
+            <table class="rich-table">
+                <tr>
+                    <th style="width:90px;">Severity</th>
+                    <th style="width:140px;">Rule ID</th>
+                    <th style="width:220px;">Location</th>
+                    <th>Description & Remediation</th>
+                </tr>
+                <tr>
+                    <td><span class="sev-error">ERROR</span></td>
+                    <td class="magenta">GUARD-ARCH-001</td>
+                    <td class="cyan">domain/user_model.py:9</td>
+                    <td class="white">Architectural drift: Layer '<span class="yellow">domain</span>' is forbidden from importing layer '<span class="red">infrastructure</span>' ('app.infrastructure.database').<br><span class="dim">Domain entities must have zero external architectural dependencies.</span><br><span class="snippet">Code: from app.infrastructure.database import DatabaseSession, get_engine</span></td>
+                </tr>
+                <tr>
+                    <td><span class="sev-error">ERROR</span></td>
+                    <td class="magenta">GUARD-ARCH-001</td>
+                    <td class="cyan">domain/user_model.py:10</td>
+                    <td class="white">Architectural drift: Layer '<span class="yellow">domain</span>' is forbidden from importing layer '<span class="red">infrastructure</span>' ('app.infrastructure.repositories.user_repo').<br><span class="dim">Domain entities must have zero external architectural dependencies.</span><br><span class="snippet">Code: from app.infrastructure.repositories.user_repo import UserRepository</span></td>
+                </tr>
+                <tr>
+                    <td><span class="sev-error">ERROR</span></td>
+                    <td class="magenta">GUARD-ARCH-001</td>
+                    <td class="cyan">domain/user_model.py:13</td>
+                    <td class="white">Architectural drift: Layer '<span class="yellow">domain</span>' is forbidden from importing layer '<span class="red">presentation</span>' ('app.presentation.api.serializers').<br><span class="dim">Domain entities must have zero external architectural dependencies.</span><br><span class="snippet">Code: from app.presentation.api.serializers import UserSerializer</span></td>
+                </tr>
+                <tr>
+                    <td><span class="sev-error">ERROR</span></td>
+                    <td class="magenta">GUARD-ARCH-001</td>
+                    <td class="cyan">domain/user_model.py:16</td>
+                    <td class="white">Architectural drift: Layer '<span class="yellow">domain</span>' is forbidden from importing layer '<span class="red">application</span>' ('app.services.auth_service').<br><span class="dim">Domain entities must have zero external architectural dependencies.</span><br><span class="snippet">Code: from app.services.auth_service import validate_token</span></td>
+                </tr>
+                <tr>
+                    <td><span class="sev-error">ERROR</span></td>
+                    <td class="magenta">GUARD-ARCH-001</td>
+                    <td class="cyan">presentation/api_controller.py:9</td>
+                    <td class="white">Architectural drift: Layer '<span class="yellow">presentation</span>' is forbidden from importing layer '<span class="red">infrastructure</span>' ('app.infrastructure.database').<br><span class="dim">Presentation controllers should not directly import raw infrastructure/database drivers.</span><br><span class="snippet">Code: from app.infrastructure.database import engine, SessionLocal</span></td>
+                </tr>
+                <tr>
+                    <td><span class="sev-error">ERROR</span></td>
+                    <td class="magenta">GUARD-ARCH-001</td>
+                    <td class="cyan">presentation/api_controller.py:11</td>
+                    <td class="white">Architectural drift: Layer '<span class="yellow">presentation</span>' is forbidden from importing layer '<span class="red">infrastructure</span>' ('app.repositories.user_repo').<br><span class="dim">Presentation controllers should not directly import raw infrastructure/database drivers.</span><br><span class="snippet">Code: from app.repositories.user_repo import UserRepo</span></td>
+                </tr>
+            </table>
+            <div class="panel red-border">
+                <div class="panel-title red-bg">🚫 GATE FAILED</div>
+                <div class="panel-body">
+                    <div><span class="bold">Scanned Files:</span> 6</div>
+                    <div><span class="bold">Total Violations:</span> 6 (<span class="red">6 errors</span>, <span class="yellow">0 warnings</span>, <span class="cyan">0 info</span>)</div>
+                    <br>
+                    <div class="red bold">[FAIL] Quality gate failed: Found violations matching or exceeding threshold 'ERROR'.</div>
+                    <div class="red">CI/CD must block this pull request to protect codebase integrity against AI drift.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════ SCENARIO 3: SECURITY BYPASSES ═══════════════ -->
+    <div id="scenario-bypasses" class="terminal hidden">
+        <div class="terminal-bar">
+            <div class="terminal-dot r"></div>
+            <div class="terminal-dot y"></div>
+            <div class="terminal-dot g"></div>
+            <div class="terminal-title">PowerShell — guardrail scan demo\services\auth_service.py</div>
+        </div>
+        <div class="terminal-body">
+            <div><span class="prompt">PS C:\guardrail-agent&gt;</span> <span class="cmd">guardrail scan demo\services\auth_service.py</span></div>
+            <br>
+            <div class="panel cyan-border">
+                <div class="panel-title cyan-bg">🛡️ [GuardRail-Agent] | AI Codebase Drift & Security Inspection</div>
+            </div>
+            <div style="margin-top:8px; color:#8b949e; font-weight:600; font-size:12px;">Detected AI Codebase Drift & Violations — Security Bypasses</div>
+            <table class="rich-table">
+                <tr>
+                    <th style="width:90px;">Severity</th>
+                    <th style="width:150px;">Rule ID</th>
+                    <th style="width:230px;">Location</th>
+                    <th>Description & Remediation</th>
+                </tr>
+                <tr>
+                    <td><span class="sev-error">ERROR</span></td>
+                    <td class="magenta">GUARD-BYPASS-001</td>
+                    <td class="cyan">auth_service.py:9</td>
+                    <td class="white">Linter suppression '<span class="bold"># type: ignore</span>' detected. AI coding agents must resolve lint errors rather than suppressing them.<br><span class="snippet">Code: import requests  # type: ignore</span></td>
+                </tr>
+                <tr>
+                    <td><span class="sev-error">ERROR</span></td>
+                    <td class="magenta">GUARD-BYPASS-001</td>
+                    <td class="cyan">auth_service.py:13</td>
+                    <td class="white">Linter suppression '<span class="bold"># noqa</span>' detected.<br><span class="snippet">Code: def authenticate_user(...) -&gt; bool:  # noqa</span></td>
+                </tr>
+                <tr>
+                    <td><span class="sev-error">ERROR</span></td>
+                    <td class="magenta">GUARD-SEC-001</td>
+                    <td class="cyan">auth_service.py:21</td>
+                    <td class="white">Security hazard: <span class="bold red">Disabled TLS/SSL certificate verification</span> (verify=False) detected.<br><span class="snippet">Code: verify=False,</span></td>
+                </tr>
+                <tr>
+                    <td><span class="sev-error">ERROR</span></td>
+                    <td class="magenta">GUARD-SEC-003</td>
+                    <td class="cyan">auth_service.py:31</td>
+                    <td class="white">Security hazard: <span class="bold red">Arbitrary code execution via eval()</span> detected.<br><span class="snippet">Code: result = eval(user_input)</span></td>
+                </tr>
+                <tr>
+                    <td><span class="sev-error">ERROR</span></td>
+                    <td class="magenta">GUARD-SEC-002</td>
+                    <td class="cyan">auth_service.py:43</td>
+                    <td class="white">Security hazard: <span class="bold red">subprocess call with shell=True</span> creates command injection risk.<br><span class="snippet">Code: shell=True,</span></td>
+                </tr>
+                <tr>
+                    <td><span class="sev-warn">WARN</span></td>
+                    <td class="magenta">GUARD-SEC-004</td>
+                    <td class="cyan">auth_service.py:49</td>
+                    <td class="white">Security hazard: Use of <span class="bold yellow">os.system()</span> is discouraged; use subprocess.run with argument list.<br><span class="snippet">Code: os.system(f"echo Migration {script_name} completed")</span></td>
+                </tr>
+                <tr>
+                    <td><span class="sev-error">ERROR</span></td>
+                    <td class="magenta">GUARD-BYPASS-001</td>
+                    <td class="cyan">auth_service.py:54</td>
+                    <td class="white">Linter suppression '<span class="bold"># nosec</span>' detected.<br><span class="snippet">Code: def generate_token(user_id: int) -&gt; str:  # nosec</span></td>
+                </tr>
+                <tr>
+                    <td><span class="sev-error">ERROR</span></td>
+                    <td class="magenta">GUARD-SEC-003</td>
+                    <td class="cyan">auth_service.py:64</td>
+                    <td class="white">Security hazard: <span class="bold red">Arbitrary code execution via exec()</span> detected.<br><span class="snippet">Code: exec(token_code, {}, local_vars)</span></td>
+                </tr>
+                <tr>
+                    <td><span class="sev-error">ERROR</span></td>
+                    <td class="magenta">GUARD-BYPASS-001</td>
+                    <td class="cyan">auth_service.py:65</td>
+                    <td class="white">Linter suppression '<span class="bold"># pragma: no cover</span>' detected.<br><span class="snippet">Code: return local_vars.get("token", "")  # pragma: no cover</span></td>
+                </tr>
+            </table>
+            <div class="panel red-border">
+                <div class="panel-title red-bg">🚫 GATE FAILED</div>
+                <div class="panel-body">
+                    <div><span class="bold">Scanned Files:</span> 1</div>
+                    <div><span class="bold">Total Violations:</span> 11 (<span class="red">10 errors</span>, <span class="yellow">1 warning</span>, <span class="cyan">0 info</span>)</div>
+                    <br>
+                    <div class="red bold">[FAIL] Quality gate failed: Found violations matching or exceeding threshold 'ERROR'.</div>
+                    <div class="red">CI/CD must block this pull request to protect codebase integrity against AI drift.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════ SCENARIO 4: FULL SCAN JSON ═══════════════ -->
+    <div id="scenario-fullscan" class="terminal hidden">
+        <div class="terminal-bar">
+            <div class="terminal-dot r"></div>
+            <div class="terminal-dot y"></div>
+            <div class="terminal-dot g"></div>
+            <div class="terminal-title">PowerShell — guardrail scan demo\ --json</div>
+        </div>
+        <div class="terminal-body">
+            <div><span class="prompt">PS C:\guardrail-agent&gt;</span> <span class="cmd">guardrail scan demo\ --json</span></div>
+            <br>
+<pre style="color:#c9d1d9; font-size:12px; line-height:1.5;">{
+  <span class="cyan">"scanned_files"</span>: <span class="yellow">7</span>,
+  <span class="cyan">"total_violations"</span>: <span class="red bold">23</span>,
+  <span class="cyan">"errors"</span>: <span class="red">22</span>,
+  <span class="cyan">"warnings"</span>: <span class="yellow">1</span>,
+  <span class="cyan">"findings"</span>: [
+    {
+      <span class="cyan">"rule_id"</span>: <span class="green">"GUARD-SLOP-001"</span>,
+      <span class="cyan">"analyzer"</span>: <span class="green">"slopsquatting"</span>,
+      <span class="cyan">"severity"</span>: <span class="red">"error"</span>,
+      <span class="cyan">"message"</span>: <span class="green">"Hallucinated dependency: 'fastapi-auth-token-superhelper' does not exist on PyPI!"</span>,
+      <span class="cyan">"file"</span>: <span class="green">"requirements_poisoned.txt"</span>,
+      <span class="cyan">"line"</span>: <span class="yellow">4</span>
+    },
+    {
+      <span class="cyan">"rule_id"</span>: <span class="green">"GUARD-ARCH-001"</span>,
+      <span class="cyan">"analyzer"</span>: <span class="green">"architecture"</span>,
+      <span class="cyan">"severity"</span>: <span class="red">"error"</span>,
+      <span class="cyan">"message"</span>: <span class="green">"Architectural drift: Layer 'domain' importing 'infrastructure'"</span>,
+      <span class="cyan">"file"</span>: <span class="green">"domain/user_model.py"</span>,
+      <span class="cyan">"line"</span>: <span class="yellow">9</span>
+    },
+    {
+      <span class="cyan">"rule_id"</span>: <span class="green">"GUARD-SEC-001"</span>,
+      <span class="cyan">"analyzer"</span>: <span class="green">"bypasses"</span>,
+      <span class="cyan">"severity"</span>: <span class="red">"error"</span>,
+      <span class="cyan">"message"</span>: <span class="green">"Security hazard: Disabled TLS/SSL certificate verification (verify=False)"</span>,
+      <span class="cyan">"file"</span>: <span class="green">"services/auth_service.py"</span>,
+      <span class="cyan">"line"</span>: <span class="yellow">21</span>
+    },
+    <span class="dim">... 20 more findings across all 3 analyzers ...</span>
+  ]
+}</pre>
+        </div>
+    </div>
+
+    <!-- ═══════════════ SCENARIO 5: SARIF EXPORT ═══════════════ -->
+    <div id="scenario-sarif" class="terminal hidden">
+        <div class="terminal-bar">
+            <div class="terminal-dot r"></div>
+            <div class="terminal-dot y"></div>
+            <div class="terminal-dot g"></div>
+            <div class="terminal-title">PowerShell — guardrail scan demo\ --sarif report.sarif</div>
+        </div>
+        <div class="terminal-body">
+            <div><span class="prompt">PS C:\guardrail-agent&gt;</span> <span class="cmd">guardrail scan demo\ --sarif demo\report.sarif</span></div>
+            <br>
+            <div class="panel cyan-border">
+                <div class="panel-title cyan-bg">🛡️ [GuardRail-Agent] | AI Codebase Drift & Security Inspection</div>
+            </div>
+            <div style="margin:12px 0; color:#8b949e;">
+                <span class="dim">SARIF report exported to demo\report.sarif</span>
+            </div>
+            <div style="margin-top:16px;">
+                <div class="prompt">PS C:\guardrail-agent&gt;</div>
+                <span class="cmd">cat demo\report.sarif | python -m json.tool | head -30</span>
+            </div>
+            <br>
+<pre style="color:#c9d1d9; font-size:12px; line-height:1.5;">{
+  <span class="cyan">"$schema"</span>: <span class="green">"https://schemastore.azurewebsites.net/schemas/json/sarif-2.1.0.json"</span>,
+  <span class="cyan">"version"</span>: <span class="green">"2.1.0"</span>,
+  <span class="cyan">"runs"</span>: [
+    {
+      <span class="cyan">"tool"</span>: {
+        <span class="cyan">"driver"</span>: {
+          <span class="cyan">"name"</span>: <span class="green">"GuardRail-Agent"</span>,
+          <span class="cyan">"version"</span>: <span class="green">"0.1.0"</span>,
+          <span class="cyan">"informationUri"</span>: <span class="green">"https://github.com/atamkeze/guardrail-agent"</span>,
+          <span class="cyan">"rules"</span>: [ <span class="dim">... 6 rule definitions ...</span> ]
+        }
+      },
+      <span class="cyan">"results"</span>: [
+        {
+          <span class="cyan">"ruleId"</span>: <span class="green">"GUARD-SLOP-001"</span>,
+          <span class="cyan">"level"</span>: <span class="red">"error"</span>,
+          <span class="cyan">"message"</span>: { <span class="cyan">"text"</span>: <span class="green">"Hallucinated dependency..."</span> },
+          <span class="cyan">"locations"</span>: [{ <span class="cyan">"physicalLocation"</span>: { <span class="cyan">"artifactLocation"</span>: { <span class="cyan">"uri"</span>: <span class="green">"requirements_poisoned.txt"</span> }}}]
+        }
+        <span class="dim">... 22 more SARIF results for GitHub Code Scanning ...</span>
+      ]
+    }
+  ]
+}</pre>
+            <div class="panel red-border" style="margin-top:12px;">
+                <div class="panel-title red-bg">🚫 GATE FAILED</div>
+                <div class="panel-body">
+                    <div><span class="bold">Scanned Files:</span> 7</div>
+                    <div><span class="bold">Total Violations:</span> 23 (<span class="red">22 errors</span>, <span class="yellow">1 warning</span>, <span class="cyan">0 info</span>)</div>
+                    <br>
+                    <div class="red bold">[FAIL] CI/CD SARIF upload will flag 22 errors in GitHub Security tab.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════ SCENARIO 6: CLEAN PASS ═══════════════ -->
+    <div id="scenario-clean" class="terminal hidden">
+        <div class="terminal-bar">
+            <div class="terminal-dot r"></div>
+            <div class="terminal-dot y"></div>
+            <div class="terminal-dot g"></div>
+            <div class="terminal-title">PowerShell — guardrail scan demo\clean\</div>
+        </div>
+        <div class="terminal-body">
+            <div><span class="prompt">PS C:\guardrail-agent&gt;</span> <span class="cmd">guardrail scan demo\clean\</span></div>
+            <br>
+            <div class="panel cyan-border">
+                <div class="panel-title cyan-bg">🛡️ [GuardRail-Agent] | AI Codebase Drift & Security Inspection</div>
+            </div>
+            <div class="panel green-border" style="margin-top:12px;">
+                <div class="panel-title green-bg">✅ PASSED</div>
+                <div class="panel-body">
+                    <div class="green bold" style="font-size:15px;">✅ [OK] Clean bill of health!</div>
+                    <br>
+                    <div>No hallucinated dependencies, architectural boundary violations, or security bypasses detected.</div>
+                    <br>
+                    <div class="dim">Your code is clean and ready to ship. 🚀</div>
+                </div>
+            </div>
+            <br>
+            <div><span class="prompt">PS C:\guardrail-agent&gt;</span> <span class="cmd">echo $LASTEXITCODE</span></div>
+            <div class="green bold">0</div>
+            <br>
+            <div><span class="prompt">PS C:\guardrail-agent&gt;</span> <span class="cursor"></span></div>
+        </div>
+    </div>
+
+    <script>
+        function showScenario(name) {
+            document.querySelectorAll('.terminal').forEach(t => t.classList.add('hidden'));
+            document.querySelectorAll('.controls button').forEach(b => b.classList.remove('active'));
+            const el = document.getElementById('scenario-' + name);
+            if (el) {
+                el.classList.remove('hidden');
+                el.classList.remove('animate-in');
+                void el.offsetWidth;
+                el.classList.add('animate-in');
+            }
+            event.target.classList.add('active');
+        }
+    </script>
+</body>
+</html>

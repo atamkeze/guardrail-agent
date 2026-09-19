@@ -1,0 +1,2 @@
+requests>=2.28.0
+fastapi-auth-token-superhelper==1.0.0
