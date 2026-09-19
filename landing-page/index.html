@@ -400,45 +400,67 @@
     <section class="features" id="features">
         <div class="container">
             <div class="text-center mb-5">
-                <h2 class="fw-bold mb-3">Enterprise-Grade Code Guardrails</h2>
-                <p class="text-muted">Protect your codebase from AI-generated vulnerabilities.</p>
+                <h2 class="fw-bold mb-3">Enterprise-Grade Code Guardrails <span class="badge bg-danger ms-2" style="font-size: 0.5em; vertical-align: middle;">v2.0 PENTEST AGENT</span></h2>
+                <p class="text-muted">A fully autonomous security engine that reasons before it acts.</p>
             </div>
             <div class="row g-4">
-                <div class="col-md-4">
-                    <div class="feature-card">
-                        <i class="bi bi-bug feature-icon"></i>
-                        <h3>PyPI Slopsquatting Detection</h3>
-                        <p>Validates dependencies asynchronously against the live PyPI registry to catch hallucinated package names injected by AI coding assistants before execution.</p>
+                
+                <div class="col-md-6 mt-4">
+                    <div class="feature-card" style="border-color: rgba(168, 85, 247, 0.5);">
+                        <i class="bi bi-robot feature-icon" style="color: #a855f7;"></i>
+                        <h3>Autonomous Pentest Agent (AI Reasoning)</h3>
+                        <p>Powered by the Gemini/Claude engine. GuardRail profiles your entire codebase (tech stack, attack surfaces, payment layers) to dynamically orchestrate and prioritize relevant security checks. It doesn't just scan; it thinks, acts, and writes a senior-level executive narrative.</p>
                     </div>
                 </div>
+
+                <div class="col-md-6 mt-4">
+                    <div class="feature-card" style="border-color: rgba(234, 179, 8, 0.5);">
+                        <i class="bi bi-display feature-icon" style="color: #eab308;"></i>
+                        <h3>Real-time Web Dashboard & Delivery</h3>
+                        <p>Stream the agent's live thought processes via WebSockets/SSE on a sleek local dashboard. Upon completion, it automatically generates professional, branded PDF reports (via ReportLab) and dispatches them straight to your email.</p>
+                    </div>
+                </div>
+
                 <div class="col-md-4">
+                    <div class="feature-card">
+                        <i class="bi bi-key feature-icon" style="color: #f97316;"></i>
+                        <h3>Secrets & Credentials Leakage</h3>
+                        <p>Advanced Shannon entropy analysis and regex validation detects high-value secrets (AWS, Stripe, JWTs) hidden in code, commit history, and hallucinated `.env` patterns.</p>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <i class="bi bi-shield-lock feature-icon" style="color: #ef4444;"></i>
+                        <h3>OWASP Top 10 Precision Scanning</h3>
+                        <p>Leverages Tree-Sitter AST—not regex—to pinpoint SQL Injections, Command Injections, and Deserialization vulnerabilities with zero false positives on docstrings.</p>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <i class="bi bi-bug feature-icon" style="color: #3b82f6;"></i>
+                        <h3>PyPI Slopsquatting & CVE Detection</h3>
+                        <p>Validates dependencies asynchronously against live OSV.dev vulnerability databases and PyPI registries to catch supply chain poisoning before execution.</p>
+                    </div>
+                </div>
+
+                <div class="col-md-6 mt-4">
                     <div class="feature-card">
                         <i class="bi bi-diagram-3 feature-icon" style="color: #00ff88;"></i>
-                        <h3>Architectural Drift Analysis</h3>
-                        <p>Uses Tree-sitter AST parsing to enforce modular boundaries defined in `.drift-rules.toml`. Prevents domain logic from directly calling infrastructure layers.</p>
+                        <h3>Architectural Drift & API Security</h3>
+                        <p>Enforces modular boundaries via `.drift-rules.toml`. Flags unauthenticated routes, missing rate limits, and IDOR patterns across modern frameworks.</p>
                     </div>
                 </div>
-                <div class="col-md-4">
-                    <div class="feature-card">
-                        <i class="bi bi-shield-check feature-icon" style="color: #ff5555;"></i>
-                        <h3>Security Bypass Detection</h3>
-                        <p>Scans the syntax tree to pinpoint unauthorized suppression comments like `# type: ignore` or `# nosec`, ensuring security standards are upheld.</p>
-                    </div>
-                </div>
+
                 <div class="col-md-6 mt-4">
                     <div class="feature-card">
-                        <i class="bi bi-robot feature-icon" style="color: #a855f7;"></i>
-                        <h3>Native MCP Server</h3>
-                        <p>Plugs directly into Antigravity, Claude Desktop, and Cursor via the Model Context Protocol (`mcp>=1.0.0`). AI agents can verify their own code contextually.</p>
+                        <i class="bi bi-plugin feature-icon" style="color: #ec4899;"></i>
+                        <h3>Native IDE MCP Server</h3>
+                        <p>Plugs directly into Antigravity, Claude Desktop, and Cursor via the Model Context Protocol (`mcp>=1.0.0`). AI agents verify their own code contextually in real time.</p>
                     </div>
                 </div>
-                <div class="col-md-6 mt-4">
-                    <div class="feature-card">
-                        <i class="bi bi-terminal feature-icon" style="color: #eab308;"></i>
-                        <h3>Rich CLI & SARIF Exports</h3>
-                        <p>Beautiful terminal UI with detailed diagnostic outputs. Export scan results as standard SARIF JSON for seamless integration with GitHub Advanced Security.</p>
-                    </div>
-                </div>
+
             </div>
         </div>
     </section>
