@@ -73,3 +73,6 @@ guardrail.sarif
 gemini-code-*.md
 sample_ai_file.py
 test_ai_sample.py
+
+# Documentation/Assets
+landing-page/
