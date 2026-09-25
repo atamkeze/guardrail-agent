@@ -76,3 +76,16 @@ def test_owasp_scanner_deserialization(tmp_path: Path):
     assert len(findings) == 2
     assert all(f.rule_id == "OWASP-A08-DESER" for f in findings)
     assert findings[0].severity == Severity.ERROR
+
+def test_owasp_scanner_clean_file_no_findings(tmp_path: Path):
+    code_file = tmp_path / "safe.py"
+    code_file.write_text(
+        "import json\n"
+        "def parse_user_payload(raw_json: str):\n"
+        "    data = json.loads(raw_json)\n"
+        "    return {'status': 'ok', 'user': data.get('username')}\n"
+    )
+    scanner = OwaspScanner()
+    findings = scanner.scan_directory(tmp_path)
+    assert len(findings) == 0
+

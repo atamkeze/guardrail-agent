@@ -68,6 +68,8 @@ desktop.ini
 *.sarif
 results.sarif
 guardrail.sarif
+guardrail-reports/
+*.pdf
 
 # Internal AI generation and prompt scratch files
 gemini-code-*.md

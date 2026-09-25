@@ -375,6 +375,92 @@ def serve_mcp() -> None:
 
 
 @app.command()
+def pentest(
+    target: str = typer.Argument(".", help="Path to codebase directory or remote GitHub repository URL"),
+    email: Optional[str] = typer.Option(None, "--email", "-e", help="Recipient email address for automated PDF report delivery"),
+    output_dir: Optional[str] = typer.Option(None, "--output-dir", "-o", help="Custom directory for generated PDF reports"),
+    api_key: Optional[str] = typer.Option(None, "--api-key", help="Optional Gemini or Claude API key for AI reasoning"),
+) -> None:
+    """
+    Launch Autonomous Penetration Testing Agent with dynamic risk reasoning and PDF/Email delivery.
+    """
+    from guardrail.agent.pentest import AutonomousPentestAgent
+
+    console.print("\n[bold cyan]╔════════════════════════════════════════════════════════════════╗[/bold cyan]")
+    console.print("[bold cyan]║[/bold cyan]  [bold white]GuardRail-Agent[/bold white] [dim]|[/dim] [bold red]Autonomous Penetration Testing Gate v2.0[/bold red]      [bold cyan]║[/bold cyan]")
+    console.print("[bold cyan]╚════════════════════════════════════════════════════════════════╝[/bold cyan]\n")
+
+    agent = AutonomousPentestAgent(api_key=api_key)
+    if output_dir:
+        agent.pdf_generator.output_dir = Path(output_dir)
+
+    def cli_progress(stage: str, msg: str):
+        if stage in ("profiling", "planning", "scanning", "synthesis", "report", "delivery"):
+            console.print(f"[bold yellow]▶[/bold yellow] [dim]{msg}[/dim]")
+        elif stage == "reasoning_complete":
+            console.print(f"\n[bold magenta]┌─ Agent Threat Model & Reasoning ─────────────────────────────┐[/bold magenta]")
+            console.print(f"[italic white]{msg}[/italic white]")
+            console.print(f"[bold magenta]└──────────────────────────────────────────────────────────────┘[/bold magenta]\n")
+
+    try:
+        report = asyncio.run(agent.run_pentest(target, email_recipient=email, progress_callback=cli_progress))
+
+        # Risk Banner
+        score = report.overall_risk_score
+        score_color = "bold red" if score in ("CRITICAL", "HIGH") else "bold yellow" if score == "MEDIUM" else "bold green"
+        console.print(f"\n[bold white]Audit Result:[/bold white] [{score_color}]{score} RISK[/{score_color}] [dim]({report.total_findings} total findings in {report.duration_seconds}s)[/dim]")
+
+        # Executive Summary
+        console.print(f"\n[bold cyan]Executive Summary:[/bold cyan]\n{report.executive_summary}\n")
+
+        # Top Findings Table
+        if report.findings:
+            from rich.table import Table
+            table = Table(title="Detected Vulnerabilities & Drift Violations", show_header=True, header_style="bold magenta")
+            table.add_column("Severity", width=10)
+            table.add_column("Rule ID", width=18)
+            table.add_column("Location", width=25)
+            table.add_column("Description", min_width=35)
+
+            for f in report.findings[:20]:
+                sev_style = "bold red" if f.severity.value == "error" else "yellow" if f.severity.value == "warning" else "cyan"
+                table.add_row(
+                    f"[{sev_style}]{f.severity.value.upper()}[/{sev_style}]",
+                    f.rule_id,
+                    f"{f.file_path}:{f.line_number or 1}",
+                    f.message,
+                )
+            console.print(table)
+            if len(report.findings) > 20:
+                console.print(f"[dim]... and {len(report.findings) - 20} additional finding(s) documented in PDF report.[/dim]")
+
+        if report.pdf_report_path:
+            console.print(f"\n[bold green]✔ PDF Report generated:[/bold green] [bold underline]{report.pdf_report_path}[/bold underline]")
+
+        if email:
+            console.print(f"[bold green]✔ Report dispatched to:[/bold green] {email}")
+
+    except Exception as exc:
+        console.print(f"\n[bold red]Pentest Agent encountered an error:[/bold red] {exc}")
+        raise typer.Exit(code=1)
+
+
+@app.command()
+def dashboard(
+    host: str = typer.Option("127.0.0.1", "--host", "-h", help="Bind host for local web dashboard"),
+    port: int = typer.Option(8000, "--port", "-p", help="Port for local web dashboard"),
+) -> None:
+    """
+    Launch the GuardRail-Agent interactive real-time web dashboard.
+    """
+    import uvicorn
+
+    console.print(f"\n[bold cyan]GuardRail-Agent[/bold cyan] Web Dashboard starting at: [bold green]http://{host}:{port}[/bold green]")
+    console.print("[dim]Press Ctrl+C to terminate the dashboard server.[/dim]\n")
+    uvicorn.run("guardrail.web.app:app", host=host, port=port, reload=False)
+
+
+@app.command()
 def version() -> None:
     """Print GuardRail-Agent version."""
     console.print(f"[bold cyan]GuardRail-Agent[/bold cyan] version [bold green]{__version__}[/bold green]")
@@ -382,3 +468,4 @@ def version() -> None:
 
 if __name__ == "__main__":
     app()
+
